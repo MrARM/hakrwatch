@@ -19,6 +19,8 @@ Add your entry to the array, along with the switch code you added to the switche
 
 Set `rstOverride` to true. 
 
+Make sure to set this to false while switching!
+
 # Switch to another app
 
 Paste the following code to switch 
@@ -43,4 +45,4 @@ void clock_setup() {
 }
 ```
 
-Note the setRoation call, rotation is going to be your landscape rotation set in the EEPROM. If you want to use portrait, use **0**. 
+Note the setRoation call, **rotation** is going to be your landscape rotation set in the EEPROM. If you want to use portrait, use **0**. 
