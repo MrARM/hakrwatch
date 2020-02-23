@@ -395,13 +395,24 @@ void set_clock_setup() {
   M5.Lcd.setRotation(rotation);
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 8, 2);
+
+  // Password Gen
+  int len = 8;
+  char *letters = "abcdefghijklmnopqrstuvwxyz0123456789";
+  String pw;
+  int i;
+  for (i = 0; i<len; i++){
+    pw = pw + letters[random(0,35)];
+  }
+  
   M5.Lcd.println("Please connect WIFI");
   M5.Lcd.println("SSID: HAKRWATCH");
-  M5.Lcd.println("PW: Password00");
+  M5.Lcd.print("PW: ");
+  M5.Lcd.println(pw);
   // Lock the device
   rstOverride = true;
   // Set up WifiManager
-  wifiManager.autoConnect("HAKRWATCH", "Password00");
+  wifiManager.autoConnect("HAKRWATCH", pw.c_str());
   // Clear screen
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setTextSize(2);
@@ -760,6 +771,9 @@ void setup() {
   pinMode(M5_LED, OUTPUT);
   pinMode(M5_BUTTON_HOME, INPUT);
   pinMode(M5_BUTTON_RST, INPUT);
+
+  // Random seed
+  randomSeed(analogRead(0));
 
   // Finish with time to show logo
   delay(3000);
