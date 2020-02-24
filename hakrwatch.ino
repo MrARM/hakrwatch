@@ -49,8 +49,9 @@ bool rstOverride = false;
 // 6 - MEGALOVAINIA
 // 7 - Battery info
 // 8 - screen rotation
+// 9 - Stopwatch
 bool isSwitching = true;
-int current_proc = 0;
+int current_proc = 9; //TODO: FIX LATER DEBUG TEMP
 
 void switcher_button_proc() {
   if (rstOverride == false) {
@@ -98,6 +99,7 @@ MENU mmenu[] = {
   { "clock", 0},
   { "TV B-GONE", 5},
   { "Megalovainia", 6},
+  { "Stopwatch", 9},
   { "settings", 2},
 };
 
@@ -425,7 +427,7 @@ void set_clock_setup() {
   // GMT +8 = 28800
   // GMT -1 = -3600
   // GMT 0 = 0
-  timeClient.setTimeOffset(-21600);
+  timeClient.setTimeOffset(-21600); // GMT -6 //TODO: Timezone setting
   // Now make a loop to wait for the ntp time
   set_clock_readyForLoop = true;
 }
@@ -741,11 +743,53 @@ void clock_setup() {
 
 void clock_loop() {
   M5.Rtc.GetBm8563Time();
-  M5.Lcd.setCursor(40, 30, 2);
+  M5.Lcd.setCursor(40, 29, 2);
   M5.Lcd.printf("%02d : %02d : %02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
   delay(250);
 }
 
+///
+
+/// STOPWATCH ///
+// States
+// 0 - Off 0:0:0
+// 1 - Running timer
+// 2 - Stopped timer - Time is blinking 500ms
+
+bool stopwatch_state = 0;
+
+
+void stopwatch_setup(){
+  M5.Lcd.setRotation(rotation);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextSize(1);
+  //
+  M5.Lcd.setCursor(35, 30, 2);
+  M5.Lcd.printf("00 : 00 : 00\n");
+}
+
+void stopwatch_loop(){
+  switch(stopwatch_state){
+    case 0:
+      // Wait for button input
+      if (digitalRead(M5_BUTTON_HOME) == LOW) {
+        M5.Rtc.GetBm8563Time();
+        uint8_t* data = M5.Rtc.asc;
+        
+        int count = sizeof(data) / sizeof(data[0]);
+        for (int i = 0; i < count; i++) {
+          Serial.print(data[i]);
+         }
+         Serial.println();
+      }
+      break;
+    case 1:
+      // Update screen every 10ms
+      break;
+    case 2:
+      break;
+  }
+}
 ///
 
 /// ENTRY ///
@@ -821,6 +865,9 @@ void loop() {
       case 8:
         rmenu_setup();
         break;
+      case 9:
+        stopwatch_setup();
+        break;
     }
   }
 
@@ -848,6 +895,9 @@ void loop() {
       break;
     case 8:
       rmenu_loop();
+      break;
+    case 9:
+      stopwatch_loop();
       break;
   }
 }
