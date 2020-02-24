@@ -756,17 +756,20 @@ void setup() {
   M5.Lcd.setRotation(rotation);
   M5.Lcd.setTextColor(GREEN, BLACK);
 
+  // EEPROM
+  // initialize EEPROM with predefined size
+  EEPROM.begin(EEPROM_SIZE);
+  rotation = EEPROM.read(0);
+
   // Boot Screen
   digitalWrite(M5_LED, HIGH); //LEDOFF
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setTextSize(2);
   M5.Lcd.setCursor(20, 30, 1);
+  M5.Lcd.setRotation(rotation);
   M5.Lcd.print("HAKR_WATCH");
 
-  // EEPROM
-  // initialize EEPROM with predefined size
-  EEPROM.begin(EEPROM_SIZE);
-  rotation = EEPROM.read(0);
+  
   // Pin setup
   pinMode(M5_LED, OUTPUT);
   pinMode(M5_BUTTON_HOME, INPUT);
