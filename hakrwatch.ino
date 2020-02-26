@@ -49,6 +49,7 @@ bool rstOverride = false;
 // 6 - MEGALOVAINIA
 // 7 - Battery info
 // 8 - screen rotation
+// 9 - timezone menu
 bool isSwitching = true;
 int current_proc = 0;
 
@@ -302,7 +303,7 @@ void battery_drawmenu(int battery, int b, int c) {
   // Deltas
   M5.Lcd.print("DeltaB: ");
   M5.Lcd.println(b);
-  
+
   M5.Lcd.print("DeltaC: ");
   M5.Lcd.println(c);
 
@@ -311,7 +312,7 @@ void battery_drawmenu(int battery, int b, int c) {
   M5.Lcd.println("Press any button to exit");
 }
 
-void battery_setup(){
+void battery_setup() {
   M5.Lcd.setRotation(0);
   rstOverride = false;
 
@@ -320,7 +321,7 @@ void battery_setup(){
   float b = M5.Axp.GetVbatData() * 1.1 / 1000;
   //  M5.Lcd.print(b);
   int battery = ((b - 3.0) / 1.2) * 100;
-  
+
   battery_drawmenu(battery, b, c);
   delay(250); // Prevent switching after menu loads up
 }
@@ -328,13 +329,13 @@ void battery_setup(){
 
 void battery_loop() {
   delay(300);
-  
+
   // Get battery levels
   float c = M5.Axp.GetVapsData() * 1.4 / 1000;
   float b = M5.Axp.GetVbatData() * 1.1 / 1000;
   //  M5.Lcd.print(b);
   int battery = ((b - 3.0) / 1.2) * 100;
-  
+
   battery_drawmenu(battery, b, c);
   // Exit button
   if (digitalRead(M5_BUTTON_HOME) == LOW) {
@@ -366,7 +367,7 @@ int resolution = 10;
 void megalovainia_setup() {
   M5.Lcd.setRotation(0);
   M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.drawBitmap(0, 0,160,80, image_data_sans);
+  M5.Lcd.drawBitmap(0, 0, 160, 80, image_data_sans);
   int melody_len = sizeof(melody) / sizeof(melody[0]);
   ledcSetup(ledChannel, freq, resolution);
   ledcAttachPin(servo_pin, ledChannel);
@@ -386,48 +387,155 @@ void megalovainia_setup() {
   current_proc = 1;
 }
 
+/// Timezone menu ///
+bool set_tz = false;
+int tz = 0;
+bool skip_first_tz_loop = true;
+
+MENU tzmenu[] = {
+  { "UTC +14", 50400},
+  { "UTC +13:45", 49500},
+  { "UTC +13", 46800},
+  { "UTC +12", 43200},
+  { "UTC +11", 39600},
+  { "UTC +10:30", 37800},
+  { "UTC +10", 36000},
+  { "UTC +9:30", 34200},
+  { "UTC +9", 32400},
+  { "UTC +8:45", 31500},
+  { "UTC +8", 28800},
+  { "UTC +7", 25200},
+  { "UTC +6:30", 23400},
+  { "UTC +6", 21600},
+  { "UTC +5:45", 20700},
+  { "UTC +5:30", 19800},
+  { "UTC +5", 18000},
+  { "UTC +4:30", 16200},
+  { "UTC +4", 14400},
+  { "UTC +3:30", 12600},
+  { "UTC +3", 10800},
+  { "UTC +2", 7200},
+  { "UTC +1", 3600},
+  { "UTC +0", 0},
+  { "UTC -1", -3600},
+  { "UTC -2", -7200},
+  { "UTC -3", -10800},
+  { "UTC -3:30", -12600},
+  { "UTC -4", -14400},
+  { "UTC -5", -18000},
+  { "UTC -6", -21000},
+  { "UTC -7", -25200},
+  { "UTC -8", -28800},
+  { "UTC -9", -32400},
+  { "UTC -9:30", -34200},
+  { "UTC -10", -36000},
+  { "UTC -11", -39600},
+  { "UTC -12", -43200},
+};
+
+void tzmenu_drawmenu() {
+  // List items
+  M5.Lcd.setRotation(0);
+  M5.Lcd.setTextSize(1);
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setCursor(0, 8, 1);
+  // FUTURE REF: This code is a scrolling menu. Might use later for expansion
+  if (cursor > 18) {
+    for ( int i = 0 + (cursor - 18) ; i < ( sizeof(tzmenu) / sizeof(MENU) ) ; i++ ) {
+      M5.Lcd.print((cursor == i) ? ">" : " ");
+      M5.Lcd.println(tzmenu[i].name);
+    }
+  } else {
+    for (
+      int i = 0 ; i < ( sizeof(tzmenu) / sizeof(MENU) ) ; i++ ) {
+      M5.Lcd.print((cursor == i) ? ">" : " ");
+      M5.Lcd.println(tzmenu[i].name);
+    }
+  }
+}
+
+void tzmenu_setup() {
+  M5.Lcd.setRotation(0);
+
+  cursor = 0;
+  rstOverride = true;
+  tzmenu_drawmenu();
+  delay(250); // Prevent switching after menu loads up
+}
+
+void tzmenu_loop() {
+  if (!skip_first_tz_loop) {
+    // Switch in menu
+    if (digitalRead(M5_BUTTON_RST) == LOW) {
+      cursor++;
+      cursor = cursor % ( sizeof(tzmenu) / sizeof(MENU) );
+      tzmenu_drawmenu();
+      delay(250);
+    }
+    // Click
+    if (digitalRead(M5_BUTTON_HOME) == LOW) {
+      // Unload menu
+      rstOverride = false;
+      isSwitching = true;
+      set_tz = true;
+      tz = tzmenu[cursor].command;
+
+      current_proc = 3;
+    }
+  } else {
+    skip_first_tz_loop = false;
+  }
+}
+
+
 /// SET CLOCK ///
 bool set_clock_readyForLoop = false;
 
 void set_clock_setup() {
-  // Set the screen
-  M5.Lcd.setTextSize(1);
-  M5.Lcd.setRotation(rotation);
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setCursor(0, 8, 2);
+  // First, check/set the timezone
+  if (set_tz == false) {
+    isSwitching = true;
+    current_proc = 9;
+  } else {
+    // Set the screen
+    M5.Lcd.setTextSize(1);
+    M5.Lcd.setRotation(rotation);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setCursor(0, 8, 2);
 
-  // Password Gen
-  int len = 8;
-  char *letters = "abcdefghijklmnopqrstuvwxyz0123456789";
-  String pw;
-  int i;
-  for (i = 0; i<len; i++){
-    pw = pw + letters[random(0,35)];
+    // Password Gen
+    int len = 8;
+    char *letters = "abcdefghijklmnopqrstuvwxyz0123456789";
+    String pw;
+    int i;
+    for (i = 0; i < len; i++) {
+      pw = pw + letters[random(0, 35)];
+    }
+
+    M5.Lcd.println("Please connect WIFI");
+    M5.Lcd.println("SSID: HAKRWATCH");
+    M5.Lcd.print("PW: ");
+    M5.Lcd.println(pw);
+    // Lock the device
+    rstOverride = true;
+    // Set up WifiManager
+    wifiManager.autoConnect("HAKRWATCH", pw.c_str());
+    // Clear screen
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.setCursor(20, 30, 1);
+    M5.Lcd.print("PLS WAIT");
+    // Set ntp client
+    timeClient.begin();
+    // Set offset time in seconds to adjust for your timezone, for example:
+    // GMT +1 = 3600
+    // GMT +8 = 28800
+    // GMT -1 = -3600
+    // GMT 0 = 0
+    timeClient.setTimeOffset(tz);
+    // Now make a loop to wait for the ntp time
+    set_clock_readyForLoop = true;
   }
-  
-  M5.Lcd.println("Please connect WIFI");
-  M5.Lcd.println("SSID: HAKRWATCH");
-  M5.Lcd.print("PW: ");
-  M5.Lcd.println(pw);
-  // Lock the device
-  rstOverride = true;
-  // Set up WifiManager
-  wifiManager.autoConnect("HAKRWATCH", pw.c_str());
-  // Clear screen
-  M5.Lcd.fillScreen(BLACK);
-  M5.Lcd.setTextSize(2);
-  M5.Lcd.setCursor(20, 30, 1);
-  M5.Lcd.print("PLS WAIT");
-  // Set ntp client
-  timeClient.begin();
-  // Set offset time in seconds to adjust for your timezone, for example:
-  // GMT +1 = 3600
-  // GMT +8 = 28800
-  // GMT -1 = -3600
-  // GMT 0 = 0
-  timeClient.setTimeOffset(-21600);
-  // Now make a loop to wait for the ntp time
-  set_clock_readyForLoop = true;
 }
 
 void set_clock_loop() {
@@ -756,17 +864,20 @@ void setup() {
   M5.Lcd.setRotation(rotation);
   M5.Lcd.setTextColor(GREEN, BLACK);
 
+  // EEPROM
+  // initialize EEPROM with predefined size
+  EEPROM.begin(EEPROM_SIZE);
+  rotation = EEPROM.read(0);
+
   // Boot Screen
   digitalWrite(M5_LED, HIGH); //LEDOFF
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setTextSize(2);
   M5.Lcd.setCursor(20, 30, 1);
+  M5.Lcd.setRotation(rotation);
   M5.Lcd.print("HAKR_WATCH");
 
-  // EEPROM
-  // initialize EEPROM with predefined size
-  EEPROM.begin(EEPROM_SIZE);
-  rotation = EEPROM.read(0);
+
   // Pin setup
   pinMode(M5_LED, OUTPUT);
   pinMode(M5_BUTTON_HOME, INPUT);
@@ -818,6 +929,9 @@ void loop() {
       case 8:
         rmenu_setup();
         break;
+      case 9:
+        tzmenu_setup();
+        break;
     }
   }
 
@@ -845,6 +959,9 @@ void loop() {
       break;
     case 8:
       rmenu_loop();
+      break;
+    case 9:
+      tzmenu_loop();
       break;
   }
 }
