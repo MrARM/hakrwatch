@@ -561,9 +561,14 @@ void set_clock_loop() {
     Serial.print("HOUR: ");
     Serial.println(timeStamp);
 
-    // TODO: Add date to RTC!
+    // Set the RTC date
+    RTC_DateTypeDef DateStruct;
+    DateStruct.Year = dayStamp.substring(0, 4).toInt();
+    DateStruct.Month = dayStamp.substring(5, 7).toInt();
+    DateStruct.Date = dayStamp.substring(8, 10).toInt();
+    M5.Rtc.SetData(&DateStruct);
 
-    // Set the RTC
+    // Set the RTC time
     RTC_TimeTypeDef TimeStruct;
     TimeStruct.Hours   = timeStamp.substring(0, 2).toInt();
     TimeStruct.Seconds = timeStamp.substring(6, 8).toInt();
