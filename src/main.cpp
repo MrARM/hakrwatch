@@ -1,20 +1,22 @@
 // HAKR_WATCH
-// V. 1.3
+// V. 1.4
 
-
-#include <M5StickC.h>
-
-#include <WiFi.h>          //ESP8266 Core WiFi Library
-#include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
-#include <WebServer.h>     //Local WebServer used to serve the configuration portal
-#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
-#include <NTPClient.h>
-#include <WiFiUdp.h>
+#include <Arduino.h>
+#include <DNSServer.h>  
 #include <EEPROM.h>
-#include "WORLD_IR_CODES.h"
-#include "sans.h"
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
+#include <M5StickC.h>
+#include <NTPClient.h>
+#include <WebServer.h>
+#include <WiFi.h>
+#include <WiFiManager.h>
+#include <WiFiUdp.h>
+
+#include "WORLD_IR_CODES.h"
+#include "sans.h"
+
+
 
 // Wifi setup
 WiFiManager wifiManager;

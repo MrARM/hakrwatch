@@ -1,0 +1,6 @@
+[submodule "lib/WiFiManager"]
+	path = lib/WiFiManager
+	url = https://github.com/tzapu/WiFiManager
+[submodule "lib/NTPClient"]
+	path = lib/NTPClient
+	url = https://github.com/taranais/NTPClient
